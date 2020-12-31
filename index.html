@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Electron</title>
+  <style>
+    * {
+      padding: 0;
+      margin: 0;
+    }
+    .headers {
+      width: 100%;
+      height: 30px;
+      background:red;
+      /* dom可拖拽 */
+      -webkit-app-region: drag; 
+      display: flex;
+      justify-content: space-between;
+      line-height: 30px;
+    }
+    .headers span {
+      cursor: pointer;
+    }
+    .headers span :hover {
+      background: #eeee;
+    }
+  </style>
+</head>
+<body>
+  <div class="headers">
+    <span>标题</span>
+    <span>
+      <span>最小化</span>
+      <span>最大化</span>
+      <span>关闭</span>
+    </span>
+  </div>
+  <div id="app">
+    <button @click="dialog">dialog</button>
+    <button @click="openPage">子页面</button>
+    <button @click="createChild">createChild</button>
+    <button @click="notification">notification</button>
+    <button @click="sendMessage">sendMessage</button>
+    <div>
+      <div>
+        <textarea v-model="text"></textarea>
+        <button @click="writeFile">保存文件</button> 
+      </div>
+    </div>
+  </div>
+</body>
+<script src="./vue.js"></script>
+<script type="text/javascript">
+  const { ipcRenderer } = require('electron')
+  const remote = require('electron').remote
+  const {dialog} = remote
+  const path = require('path')
+  const fs = require('fs')
+
+  let app = new Vue({
+    el: '#app',
+    data () {
+      return {
+        text: ''
+      }
+    },
+    methods: {
+      // 读取文件
+      readFile (path) {
+        fs.readFile(path, (err, data) => {
+          if (err) {
+            alert('文件读取出错')
+          } else {
+            this.text = data.toString()
+          }
+        })
+      },
+      // 写入文件
+      writeFile () {
+        let _this = this
+        dialog.showSaveDialog({properties: ['createDirectory']}).then(res => {
+          if (!res.canceled) {
+            const path = res.filePath
+            fs.writeFile(path, _this.text, (err, data) => {
+              if (err) {
+                console.log('保存失败')
+              } else {
+                console.log('保存成功')
+              }
+            })
+          }
+        })
+      },
+      // 系统通知
+      notification () {
+        let option = {
+          title: "新消息",                            // 通知标题
+          body: "你的100万已经到账",                               // 内容
+          icon: "icon.ico",                                 // 图标
+          href: 'https://www.cnblogs.com/binglicheng/'            // 地址
+        };
+        let hhwNotication = new window.Notification(option.title, option);
+        hhwNotication.onclick = () => {
+          console.log('回应了系统通知!!')
+        }
+      },
+      // 打开对话框
+      dialog () {
+        // 打开一个对话框
+        dialog.showOpenDialog({
+          properties: ['openFile', 'multiSelections']
+        }).then(res =>{
+          if (!res.canceled) {
+            console.log(res.filePaths, '选中文件')
+            this.readFile(res.filePaths[0])
+          }
+        }).catch(err => {
+          console.log(err, "取消")
+        })
+      },
+      // 新建子页面
+      openPage () {
+        // window.open('child.html')
+        let win = remote.getCurrentWindow()
+        let child = null
+        child = new remote.BrowserWindow({
+          height: 450,
+          width: 600,
+          parent: win,
+          modal: true,
+          useContentsSize: true,
+          frame: false,
+          webPreferences: {
+            enableRemoteModule: true,
+            nodeIntegration: true
+          }
+        })
+        child.loadFile('child.html')
+        child.on('closed', () => {
+          child = null
+        })
+      },
+      // 新建子页面
+      createChild () {
+        window.open('child.html', 'childPage', 'width=600,height=450')
+      },
+      // 向主进程发送消息
+      sendMessage () {
+        ipcRenderer.send('page-message', '渲染进程发送的消息')
+      }
+    },
+    created () {
+      // 监听主进程回复的消息
+      ipcRenderer.on('main-message', (e, data) => {
+        console.log(data)
+      })
+       // 监听子页面消息
+       window.addEventListener('message', e => {
+        console.log(e, '子页面消息')
+      })
+    }
+  })
+</script>
+</html>

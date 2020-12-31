@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>child</title>
+  <style>
+    html, body {
+      border: 1px solid #333;
+    }
+  </style>
+</head>
+<body>
+  <h1>Child Page</h1>
+  <button id="btn">发送消息</button>
+</body>
+<script>
+const btn = document.getElementById('btn')
+const remote = require('electron').remote
+btn.addEventListener('click', () => {
+  remote.getCurrentWindow().destroy()
+})
+
+</script>
+</html>
