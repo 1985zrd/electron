@@ -9,8 +9,8 @@ function createWindow () {
   win = new BrowserWindow({
     width: 900,
     height: 600,
-    useContentSize: true,
-    frame: false,
+    // useContentSize: true,
+    // frame: false,
     // backgroundColor: '#8a8787',
     icon: path.join(__dirname, 'favicon.ico'),
     webPreferences: {
@@ -28,7 +28,7 @@ function createWindow () {
   })
   win.loadFile('index.html')
   // 打开 开发者工具
-  // win.webContents.openDevTools()
+  win.webContents.openDevTools()
   // 主进程,主动发送消息到渲染进程
   setTimeout(() => {
     win.webContents.send('main-message', '主进程的第一个消息')
@@ -76,5 +76,15 @@ ipcMain.on('page-message', (e, data) => {
 
 app.whenReady().then(createWindow)
 app.on('window-all-closed', () => {
-  app.quit()
+  // mac os 不需要退出
+  if (process.platform !== 'darwin') {
+    app.quit()
+  }
+  
+})
+// mac os从隐藏到显示
+app.on('activate', () => {
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createWindow()
+  }
 })

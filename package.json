@@ -13,5 +13,8 @@
   "dependencies": {
     "axios": "^0.21.1",
     "electron": "^11.1.1"
+  },
+  "devDependencies": {
+    "eslint": "^7.16.0"
   }
 }
